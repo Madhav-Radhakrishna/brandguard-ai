@@ -5,10 +5,12 @@
 const BASE = 'https://generativelanguage.googleapis.com/v1beta'
 
 // ── EMBEDDINGS ────────────────────────────────────────────────────────────────
-// Returns a float[768] vector using gemini-embedding-2 at 768 dimensions.
+// Returns a float[768] vector using gemini-embedding-2 / text-embedding-004.
 export async function embedText(text) {
-  const model = process.env.GEMINI_EMBED_MODEL
-  const url   = `${BASE}/models/${model}:embedContent?key=${process.env.GEMINI_API_KEY}`
+  const rawModel = process.env.GEMINI_EMBED_MODEL || 'text-embedding-004'
+  const model    = rawModel.replace(/^models\//, '')
+  const apiKey   = process.env.GEMINI_API_KEY
+  const url      = `${BASE}/models/${model}:embedContent?key=${apiKey}`
 
   const res = await fetch(url, {
     method: 'POST',
@@ -23,7 +25,7 @@ export async function embedText(text) {
 
   if (!res.ok) throw new Error(`Embedding error ${res.status}: ${await res.text()}`)
   const data = await res.json()
-  return data.embedding.values // float[] length 768
+  return data.embedding?.values || []
 }
 
 // ── GENERATION — strict JSON schema ──────────────────────────────────────────
@@ -47,8 +49,10 @@ const SCHEMA = {
 // Builds and sends the Gemini prompt, returns a raw array.
 // Caller must validate/filter the response.
 export async function runGeminiAudit(submittedText, approvedRules, memoryCases) {
-  const model = process.env.GEMINI_MODEL
-  const url   = `${BASE}/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`
+  const rawModel = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
+  const model    = rawModel.replace(/^models\//, '')
+  const apiKey   = process.env.GEMINI_API_KEY
+  const url      = `${BASE}/models/${model}:generateContent?key=${apiKey}`
 
   const rulesBlock = approvedRules.map(r =>
     `[ID:${r.id}] [${r.type}] ${r.title}: ${r.content}${r.value ? ` Approved value: ${r.value}` : ''}`
