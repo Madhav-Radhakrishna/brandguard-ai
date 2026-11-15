@@ -1,0 +1,3 @@
+# BrandGuard AI — Vercel serverless API functions
+
+Each file here becomes a serverless endpoint at /api/<filename>

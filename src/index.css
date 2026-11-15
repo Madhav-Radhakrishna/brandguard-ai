@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* BrandGuard global resets */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #0A0A0A;
+  color: #F5F5F5;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Thin red progress bar for loading */
+.progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2px;
+  background: #E5262B;
+  animation: progress 1.5s ease-in-out infinite;
+  z-index: 9999;
+}
+
+@keyframes progress {
+  0%   { width: 0%; opacity: 1; }
+  60%  { width: 85%; opacity: 1; }
+  100% { width: 100%; opacity: 0; }
+}
+
+/* Focus visible ring (accessibility) */
+:focus-visible {
+  outline: 1px solid #E5262B;
+  outline-offset: 2px;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: #0A0A0A; }
+::-webkit-scrollbar-thumb { background: #262626; border-radius: 2px; }
