@@ -83,7 +83,7 @@ values (
   'guideline',
   'Brand Tone of Voice',
   'All LearnBridge content must be friendly, clear, and jargon-free. Avoid hype, exaggeration, and ALL CAPS for emphasis. Write as if you are a knowledgeable friend, not a salesperson.',
-  array[],
+  ARRAY[]::text[],  -- empty: guideline has no keyword triggers
   'approved',
   now() - interval '30 days'
 );
