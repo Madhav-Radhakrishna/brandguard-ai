@@ -101,8 +101,7 @@ export default function AssistantPage() {
       setMessages(prev => [...prev, { role: 'model', text: json.answer }])
     } catch (err) {
       setError(err.message)
-      // Remove the user message on hard error so they can retry
-      setMessages(prev => prev.slice(0, -1))
+      // Keep the user message visible – just show the error below it
     } finally {
       setLoading(false)
       textareaRef.current?.focus()

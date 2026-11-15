@@ -44,7 +44,7 @@ export default async function handler(req, res) {
   // ── LOAD APPROVED RULES ───────────────────────────────────────────────────
   const { data: rules } = await supabase
     .from('brand_rules')
-    .select('id, title, type, rule_key, content, value, examples')
+    .select('id, title, type, rule_key, content, value')
     .eq('status', 'approved')
     .order('type')
 
@@ -52,8 +52,7 @@ export default async function handler(req, res) {
     ? (rules || []).map(r =>
         `• [${(r.type || 'rule').toUpperCase()}] ${r.title} (key: ${r.rule_key})\n` +
         `  Policy: ${r.content}` +
-        (r.value    ? `\n  Approved value: ${r.value}` : '') +
-        (r.examples ? `\n  Examples: ${r.examples}` : '')
+        (r.value ? `\n  Approved value: ${r.value}` : '')
       ).join('\n\n')
     : 'No approved rules are currently on file.'
 
