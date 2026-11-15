@@ -1,6 +1,7 @@
 {
   "functions": {
-    "api/audit.js": { "maxDuration": 30 }
+    "api/audit.js":     { "maxDuration": 30 },
+    "api/assistant.js": { "maxDuration": 30 }
   },
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/index.html" }

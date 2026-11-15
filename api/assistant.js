@@ -10,7 +10,7 @@ const BASE = 'https://generativelanguage.googleapis.com/v1beta'
 
 const Input = z.object({
   question: z.string().min(1).max(2000),
-  history:  z.array(z.object({
+  history: z.array(z.object({
     role: z.enum(['user', 'model']),
     text: z.string(),
   })).max(20).optional().default([]),
@@ -30,55 +30,59 @@ export default async function handler(req, res) {
 
   const supabase = getSupabaseAdmin()
 
-  // ── AUTH ─────────────────────────────────────────────────────────────────────
+  // ── AUTH ──────────────────────────────────────────────────────────────────
   const token = (req.headers.authorization || '').replace('Bearer ', '').trim()
   if (!token) return res.status(401).json({ error: 'Missing auth token' })
   const { data: { user }, error: authErr } = await supabase.auth.getUser(token)
   if (authErr || !user) return res.status(401).json({ error: 'Unauthorised' })
 
-  // ── VALIDATE INPUT ───────────────────────────────────────────────────────────
+  // ── VALIDATE INPUT ────────────────────────────────────────────────────────
   const parsed = Input.safeParse(req.body)
   if (!parsed.success) return res.status(400).json({ error: parsed.error.issues[0].message })
   const { question, history } = parsed.data
 
-  // ── LOAD APPROVED RULES ──────────────────────────────────────────────────────
+  // ── LOAD APPROVED RULES ───────────────────────────────────────────────────
   const { data: rules } = await supabase
     .from('brand_rules')
     .select('id, title, type, rule_key, content, value, examples')
     .eq('status', 'approved')
     .order('type')
 
-  const rulesBlock = (rules || []).map(r =>
-    `• [${r.type?.toUpperCase()}] ${r.title} (key: ${r.rule_key})` +
-    `\n  Policy: ${r.content}` +
-    (r.value        ? `\n  Approved value: ${r.value}` : '') +
-    (r.examples     ? `\n  Examples: ${r.examples}` : '')
-  ).join('\n\n')
+  const rulesBlock = (rules || []).length > 0
+    ? (rules || []).map(r =>
+        `• [${(r.type || 'rule').toUpperCase()}] ${r.title} (key: ${r.rule_key})\n` +
+        `  Policy: ${r.content}` +
+        (r.value    ? `\n  Approved value: ${r.value}` : '') +
+        (r.examples ? `\n  Examples: ${r.examples}` : '')
+      ).join('\n\n')
+    : 'No approved rules are currently on file.'
 
-  // ── BUILD GEMINI MULTI-TURN PROMPT ───────────────────────────────────────────
+  // ── GEMINI CONFIG ─────────────────────────────────────────────────────────
   const rawModel = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
   const model    = rawModel.replace(/^models\//, '')
   const apiKey   = process.env.GEMINI_API_KEY
   const url      = `${BASE}/models/${model}:generateContent?key=${apiKey}`
 
-  const systemText = `You are the Brand Assistant for LearnBridge, an online-learning company.
-Your ONLY job is to answer questions about LearnBridge's brand guidelines and communication policies.
+  // System instruction passed via the proper Gemini API field (not as a turn)
+  const systemInstruction = {
+    parts: [{
+      text:
+        `You are the Brand Assistant for LearnBridge, an online-learning company.\n` +
+        `Your ONLY job is to answer questions about LearnBridge brand guidelines.\n\n` +
+        `APPROVED BRAND RULES (the only binding policy – do not invent rules):\n` +
+        rulesBlock +
+        `\n\nINSTRUCTIONS:\n` +
+        `- Answer concisely in plain language. Use bullet points for multiple items.\n` +
+        `- Cite the relevant rule title when quoting policy.\n` +
+        `- If the question is unrelated to brand compliance, politely say you can only help with brand guidelines.\n` +
+        `- If the user asks for a rewrite or example, provide one following the rules above.\n` +
+        `- Never claim something is a rule unless it is in the list above.\n` +
+        `- Keep responses under 300 words unless a detailed rewrite is explicitly requested.`
+    }]
+  }
 
-APPROVED BRAND RULES (the only binding policy – do not invent rules):
-${rulesBlock || 'No approved rules found.'}
-
-INSTRUCTIONS:
-- Answer concisely and in plain language. Use bullet points when listing multiple items.
-- Quote the relevant rule title when you cite a rule.
-- If the question is unrelated to brand compliance (e.g., coding, general knowledge), politely redirect: explain you can only help with brand guidelines.
-- If the user asks for a specific example or rewrite, provide one that follows the rules above.
-- Never claim something is a rule unless it appears in the list above.
-- Keep responses under 300 words unless a detailed rewrite is explicitly requested.`
-
-  // Build contents array: system + history + current question
+  // Build contents array: prior history + current question (NO fake system turns)
   const contents = [
-    { role: 'user',  parts: [{ text: systemText }] },
-    { role: 'model', parts: [{ text: 'Understood. I am the Brand Assistant for LearnBridge. I will answer questions about brand guidelines using only the approved rules above. How can I help you?' }] },
     ...history.map(h => ({
       role:  h.role,
       parts: [{ text: h.text }],
@@ -92,6 +96,7 @@ INSTRUCTIONS:
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          systemInstruction,
           contents,
           generationConfig: {
             temperature:     0.3,
@@ -99,7 +104,7 @@ INSTRUCTIONS:
           },
         }),
       }),
-      timeout(15000),
+      timeout(25000),
     ])
 
     if (!geminiRes.ok) {
@@ -110,13 +115,17 @@ INSTRUCTIONS:
     const data   = await geminiRes.json()
     const answer = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
 
-    if (!answer) return res.status(502).json({ error: 'Gemini returned an empty response.' })
+    if (!answer) {
+      // Surface finish reason if available (e.g. SAFETY block)
+      const finishReason = data.candidates?.[0]?.finishReason || 'UNKNOWN'
+      return res.status(502).json({ error: `Assistant returned no content (reason: ${finishReason}). Please rephrase your question.` })
+    }
 
     return res.status(200).json({ answer })
 
   } catch (err) {
     if (err.message.includes('Timed out')) {
-      return res.status(504).json({ error: 'The assistant took too long to respond. Please try again.' })
+      return res.status(504).json({ error: 'The assistant took too long. Please try again.' })
     }
     return res.status(500).json({ error: err.message })
   }
