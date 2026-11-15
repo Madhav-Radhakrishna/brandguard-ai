@@ -101,7 +101,7 @@ export default function ResubmitModal({ submission, findings, onClose }) {
               value={text}
               onChange={e => { setText(e.target.value); setError('') }}
               disabled={loading}
-              className={`w-full bg-bg border text-fg text-sm px-4 py-3 focus:outline-none focus:border-accent resize-y leading-relaxed ${overLimit ? 'border-accent' : 'border-border'} ${loading ? 'opacity-50' : ''}`}
+              className={`w-full bg-[#141414] border text-fg text-sm px-4 py-3 focus:outline-none focus:border-accent resize-y leading-relaxed ${overLimit ? 'border-accent' : 'border-border'} ${loading ? 'opacity-50' : ''}`}
             />
           </div>
           <div className="flex justify-between text-xs font-mono text-muted">

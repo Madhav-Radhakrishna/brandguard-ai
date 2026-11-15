@@ -10,9 +10,9 @@ _Updated after each stage. Used for honest hackathon submission._
 | 3 | Submit + audit pipeline + findings view | WORKS | Rule engine + Gemini + memory retrieval working |
 | 4 | Review workflow (employee actions + manager review) | WORKS | Employee accept/edit/reject, resubmit v(n+1), manager confirm/decision |
 | 5 | Memory loop + Memory page | WORKS | Manager confirms findings → stored as memory; Memory page with revoke |
-| 6 | Brand Assistant | WORKS | Chat UI + /api/assistant; grounded in approved rules; multi-turn history |
-| 7 | Insights page | NOT BUILT | – |
-| 8 | DOCX + PDF upload | NOT BUILT | – |
-| 9 | Hardening + final README | NOT BUILT | – |
+| 6 | Brand Assistant | WORKS | Chat UI + /api/assistant; grounded in approved rules; graceful fallback on 403/429 |
+| 7 | Insights page | WORKS | Stat cards + bar/pie/line charts (recharts); filters: date, category, severity, status |
+| 8 | DOCX + PDF upload | WORKS | Client-side extraction via mammoth (docx) + pdfjs-dist (pdf); drag-and-drop UI |
+| 9 | Hardening + final README | WORKS | bg-bg bug fixed, README complete, all modules verified |
 
 **Status key**: `WORKS` / `PARTIAL` / `NOT BUILT` / `NOT TESTED`
