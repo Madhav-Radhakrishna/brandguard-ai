@@ -29,21 +29,34 @@ export default function SubmitPage() {
     try {
       const { data: { session } } = await supabase.auth.getSession()
 
-      const res = await fetch('/api/audit', {
-        method: 'POST',
-        headers: {
-          'Content-Type':  'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ text: text.trim(), source: 'typed' }),
-      })
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), 35000) // 35s client timeout
+
+      let res
+      try {
+        res = await fetch('/api/audit', {
+          method: 'POST',
+          signal: controller.signal,
+          headers: {
+            'Content-Type':  'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ text: text.trim(), source: 'typed' }),
+        })
+      } finally {
+        clearTimeout(timer)
+      }
 
       const json = await res.json()
-      if (!res.ok) { setError(json.error || 'Audit failed. Please try again.'); return }
+      if (!res.ok) { setError(json.error || `Audit failed (${res.status}). Please try again.`); return }
 
       navigate(`/submissions/${json.submissionId}`)
     } catch (e) {
-      setError('Network error. Make sure the app is deployed or use `vercel dev` locally.')
+      if (e.name === 'AbortError') {
+        setError('Audit timed out (>35s). The Gemini API may be slow — please try again.')
+      } else {
+        setError(`Error: ${e.message}`)
+      }
     } finally {
       setAuditing(false)
     }
