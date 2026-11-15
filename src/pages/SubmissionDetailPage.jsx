@@ -37,7 +37,7 @@ export default function SubmissionDetailPage() {
       const [subResult, finResult] = await Promise.all([
         supabase.from('submissions').select('*').eq('id', id).single(),
         supabase.from('findings')
-          .select('*, brand_rules(title, rule_key, type)')
+          .select('*, brand_rules(title, rule_key, type, replacement)')
           .eq('submission_id', id),
       ])
 
@@ -363,7 +363,12 @@ function FindingCard({ finding, isManager, showEmployeeActions, onEmployeeAction
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            onClick={() => onEmployeeAction(finding.id, 'accepted', finding.suggestion)}
+            onClick={() => {
+              // Store the replacement WORD (not the full suggestion sentence)
+              // so the resubmit modal can substitute cleanly.
+              const replacement = finding.brand_rules?.replacement || null
+              onEmployeeAction(finding.id, 'accepted', replacement)
+            }}
             className={`px-3 py-1.5 text-xs font-mono uppercase tracking-wider border transition-colors ${
               empAction === 'accepted'
                 ? 'border-green-500 bg-green-950 text-green-200 font-bold'
