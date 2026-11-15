@@ -4,8 +4,8 @@ _Updated after each stage. Used for honest hackathon submission._
 
 | Stage | Description | Status | Notes |
 |-------|-------------|--------|-------|
-| 0 | Setup: repo, Vite, Tailwind, Supabase/Vercel/Gemini accounts | NOT TESTED | — |
-| 1 | Database + Auth + RLS + seed data + design system | NOT BUILT | — |
+| 0 | Setup: repo, Vite, Tailwind, Supabase/Vercel/Gemini accounts | WORKS | Live on Vercel |
+| 1 | Database + Auth + RLS + seed data + design system | WORKS | Both roles login, role-based nav confirmed |
 | 2 | Knowledge Hub (rule management) | NOT BUILT | — |
 | 3 | Submit + audit pipeline + findings view | NOT BUILT | — |
 | 4 | Review workflow (employee actions + manager review) | NOT BUILT | — |
