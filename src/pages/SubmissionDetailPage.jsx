@@ -81,7 +81,7 @@ export default function SubmissionDetailPage() {
     setActionLoading(false)
   }
 
-  // ── MANAGER: confirm / reject a single finding ────────────────────────────
+  // ── MANAGER: confirm / reject a single finding + store memory on confirm ──
   async function handleManagerFindingReview(findingId, status) {
     setActionLoading(true)
     const patch = {
@@ -90,7 +90,31 @@ export default function SubmissionDetailPage() {
       reviewed_at:   new Date().toISOString(),
     }
     const { error: err } = await supabase.from('findings').update(patch).eq('id', findingId)
-    if (!err) setFindings(prev => prev.map(f => f.id === findingId ? { ...f, ...patch } : f))
+    if (!err) {
+      setFindings(prev => prev.map(f => f.id === findingId ? { ...f, ...patch } : f))
+
+      // When CONFIRMED → store as memory case (embedding happens server-side)
+      if (status === 'confirmed') {
+        const finding = findings.find(f => f.id === findingId)
+        if (finding) {
+          const { data: { session } } = await supabase.auth.getSession()
+          fetch('/api/memory', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({
+              finding_id:       finding.id,
+              rule_id:          finding.rule_id || null,
+              case_text:        finding.original_text,
+              final_correction: finding.final_correction || null,
+            }),
+          }).catch(e => console.error('Memory store failed (non-fatal):', e.message))
+          // Fire-and-forget — UI doesn't wait for embedding to complete
+        }
+      }
+    }
     setActionLoading(false)
   }
 
