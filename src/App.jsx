@@ -9,7 +9,8 @@ import SubmissionsPage   from './pages/SubmissionsPage'
 import KnowledgeHubPage  from './pages/KnowledgeHubPage'
 import MemoryPage        from './pages/MemoryPage'
 import InsightsPage      from './pages/InsightsPage'
-import AssistantPage     from './pages/AssistantPage'
+import AssistantPage          from './pages/AssistantPage'
+import SubmissionDetailPage  from './pages/SubmissionDetailPage'
 
 export default function App() {
   return (
@@ -28,6 +29,9 @@ export default function App() {
           } />
           <Route path="/assistant" element={
             <RequireAuth><AssistantPage /></RequireAuth>
+          } />
+          <Route path="/submissions/:id" element={
+            <RequireAuth><SubmissionDetailPage /></RequireAuth>
           } />
 
           {/* Manager only */}

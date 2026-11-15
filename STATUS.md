@@ -6,7 +6,7 @@ _Updated after each stage. Used for honest hackathon submission._
 |-------|-------------|--------|-------|
 | 0 | Setup: repo, Vite, Tailwind, Supabase/Vercel/Gemini accounts | WORKS | Live on Vercel |
 | 1 | Database + Auth + RLS + seed data + design system | WORKS | Both roles login, role-based nav confirmed |
-| 2 | Knowledge Hub (rule management) | NOT BUILT | — |
+| 2 | Knowledge Hub (rule management) | WORKS | Add/approve/archive/new-version confirmed |
 | 3 | Submit + audit pipeline + findings view | NOT BUILT | — |
 | 4 | Review workflow (employee actions + manager review) | NOT BUILT | — |
 | 5 | Memory loop + Memory page | NOT BUILT | — |
