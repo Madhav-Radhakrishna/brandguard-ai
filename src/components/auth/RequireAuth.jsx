@@ -1,27 +1,14 @@
 // components/auth/RequireAuth.jsx
-// Redirects to /login if not authenticated.
-// Optionally enforces a required role (e.g. 'brand_manager').
-import { Navigate, useLocation } from 'react-router-dom'
+// No sign-in needed. Evaluates role directly for role-gated pages.
+import { Navigate } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 
 export default function RequireAuth({ children, role }) {
-  const { session, profile, loading } = useAuth()
-  const location = useLocation()
+  const { profile, isManager } = useAuth()
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-bg">
-        <p className="text-muted text-sm font-mono uppercase tracking-widest">Loading...</p>
-      </div>
-    )
-  }
-
-  if (!session) {
-    return <Navigate to="/login" state={{ from: location }} replace />
-  }
-
-  // Role check: redirect employees away from manager-only pages
-  if (role && profile?.role !== role) {
+  // If a page specifically requires brand_manager and user is on employee mode,
+  // redirect them to /submit or let them toggle
+  if (role === 'brand_manager' && !isManager) {
     return <Navigate to="/submit" replace />
   }
 

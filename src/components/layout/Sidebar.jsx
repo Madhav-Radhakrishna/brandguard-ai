@@ -1,7 +1,7 @@
 // components/layout/Sidebar.jsx
-// Fixed left sidebar: BrandGuard wordmark, nav links, user info + logout.
-// Active item: 2px red left border + white text. Text-only links, no icons.
-import { NavLink, useNavigate } from 'react-router-dom'
+// Fixed left sidebar: BrandGuard wordmark, nav links, role switcher toggle.
+// Role Toggle lets judges switch between Employee and Brand Manager anytime without login.
+import { NavLink } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 
 // Nav items per role
@@ -20,14 +20,8 @@ const managerLinks = [
 ]
 
 export default function Sidebar() {
-  const { profile, signOut } = useAuth()
-  const navigate = useNavigate()
-  const links = profile?.role === 'brand_manager' ? managerLinks : employeeLinks
-
-  async function handleLogout() {
-    await signOut()
-    navigate('/login')
-  }
+  const { profile, role, toggleRole, isManager } = useAuth()
+  const links = isManager ? managerLinks : employeeLinks
 
   return (
     <aside className="fixed top-0 left-0 h-screen w-60 bg-surface border-r border-border flex flex-col z-30">
@@ -37,8 +31,30 @@ export default function Sidebar() {
         <span className="font-semibold text-fg text-base tracking-tight">BrandGuard AI</span>
       </div>
 
+      {/* Role Switcher Pill / Toggle */}
+      <div className="p-3 mx-4 my-3 bg-[#121212] border border-border rounded flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-muted">
+            Current Role
+          </span>
+          <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded font-bold uppercase tracking-wider ${
+            isManager ? 'bg-accent/20 text-accent border border-accent/40' : 'bg-blue-900/30 text-blue-300 border border-blue-500/30'
+          }`}>
+            {isManager ? 'Manager' : 'Employee'}
+          </span>
+        </div>
+
+        <button
+          onClick={toggleRole}
+          className="w-full py-1.5 px-2 text-xs font-mono font-medium tracking-wide bg-surface hover:bg-border/60 text-fg border border-border hover:border-fg transition-all flex items-center justify-center gap-1.5 rounded"
+          title="Click to toggle between Employee and Manager view"
+        >
+          <span>⇄ Switch to {isManager ? 'Employee' : 'Manager'}</span>
+        </button>
+      </div>
+
       {/* Nav links */}
-      <nav className="flex-1 py-4 overflow-y-auto">
+      <nav className="flex-1 py-2 overflow-y-auto">
         {links.map(({ to, label }) => (
           <NavLink
             key={to}
@@ -56,20 +72,17 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* User info + logout */}
+      {/* Active User info */}
       <div className="px-5 py-4 border-t border-border">
-        <p className="text-xs font-mono uppercase tracking-widest text-muted mb-0.5">
-          {profile?.role === 'brand_manager' ? 'Brand Manager' : 'Employee'}
+        <p className="text-[10px] font-mono uppercase tracking-widest text-muted mb-0.5">
+          Active Persona
         </p>
-        <p className="text-sm text-fg truncate mb-3">
-          {profile?.full_name || 'Loading...'}
+        <p className="text-sm font-medium text-fg truncate">
+          {profile?.full_name}
         </p>
-        <button
-          onClick={handleLogout}
-          className="text-xs text-muted hover:text-accent transition-colors font-mono uppercase tracking-widest"
-        >
-          Logout
-        </button>
+        <p className="text-xs text-muted truncate mt-0.5">
+          {profile?.department}
+        </p>
       </div>
     </aside>
   )
